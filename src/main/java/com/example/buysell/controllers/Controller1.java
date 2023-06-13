@@ -194,7 +194,8 @@ public class Controller1 {
                 return gson.toJson(response);
             } else if (mode.equals("trueverification")) {
                 String number = event.getNumber();
-                dbfunctions.updatewhere("profiles", new String[]{"verification"}, new String[]{"2"}, "number='" + number + "'");
+                String vkid = event.getVkAccessToken();
+                dbfunctions.updatewhere("profiles", new String[]{"verification", "vktoken"}, new String[]{"2", vkid}, "number='" + number + "'");
             } else if (mode.equals("puttravels")) {
                 String driver = event.getDriver();
                 String companion = event.getCompanion();
