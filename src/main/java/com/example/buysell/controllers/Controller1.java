@@ -194,8 +194,8 @@ public class Controller1 {
                 return gson.toJson(response);
             } else if (mode.equals("trueverification")) {
                 String number = event.getNumber();
-                String vkid = event.getVkAccessToken();
-                dbfunctions.updatewhere("profiles", new String[]{"verification", "vktoken"}, new String[]{"2", vkid}, "number='" + number + "'");
+                String vktoken = event.getVkAccessToken();
+                dbfunctions.updatewhere("profiles", new String[]{"verification", "vktoken"}, new String[]{"2", vktoken}, "number='" + number + "'");
             } else if (mode.equals("puttravels")) {
                 String driver = event.getDriver();
                 String companion = event.getCompanion();
@@ -402,8 +402,12 @@ public class Controller1 {
         }
         catch (Exception e)
         {
+            Gson lol = new Gson();
+            ResponseBody event = lol.fromJson(body, ResponseBody.class);
+            ResponseBody response = new ResponseBody();
             System.out.println(e.toString());
-            return "error";
+            response.setText(e.toString());
+            return e.toString();
         }
     }
 }
