@@ -77,6 +77,38 @@ public class dbfunctions {
             return new String[]{"error"};
         }
     }
+    public static String[] read_comments(String tb) throws SQLException, ClassNotFoundException {
+        Class.forName("org.sqlite.JDBC");
+        Connection conn = DriverManager.getConnection("jdbc:sqlite:around.db");
+        Statement cur = conn.createStatement();
+        try {
+            String req = "SELECT comment, LENGTH(comment) FROM " + tb;
+            ResultSet otv = cur.executeQuery(req);
+            String[] ret = new String[2];
+            ret[0] = "";
+            ret[1] = "0;";
+            int k = 0;
+            while (otv.next()) {
+                ret[0] += otv.getString(1);
+                int z = otv.getInt(2);
+                ret[1] += Integer.toString(z + k) + ";";
+                k += z;
+            }
+            ret[1] = ret[1].substring(0, ret[1].length() - 1);
+            System.out.println(ret[1]);
+            System.out.println(ret[0]);
+            conn.close();
+            cur.close();
+            return ret;
+        }
+        catch(Exception e)
+        {
+            conn.close();
+            cur.close();
+            e.printStackTrace();
+            return new String[]{"error"};
+        }
+    }
     public static void updatewhere(String tb, String[] cols, String[] vals, String usl) throws SQLException, ClassNotFoundException {
         Class.forName("org.sqlite.JDBC");
         Connection conn = DriverManager.getConnection("jdbc:sqlite:around.db");

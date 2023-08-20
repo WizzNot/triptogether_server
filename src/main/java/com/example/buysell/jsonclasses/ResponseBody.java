@@ -6,9 +6,13 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class ResponseBody implements Serializable {
+
     @SerializedName("reg")
     @Expose
     private Boolean reg;
+    @SerializedName("status")
+    @Expose
+    private String status;
     @SerializedName("login")
     @Expose
     private Boolean login;
@@ -67,13 +71,7 @@ public class ResponseBody implements Serializable {
     @Expose
     private String walker;
 
-    public String getWalker() {
-        return walker;
-    }
-    public void setWalker(String s)
-    {
-        walker = s;
-    }
+
     @SerializedName("price")
     @Expose
     private String price;
@@ -86,7 +84,25 @@ public class ResponseBody implements Serializable {
     @SerializedName("vkAccessToken")
     @Expose
     private String vkAccessToken;
+    @SerializedName("tags")
+    @Expose
+    private String tags;
+    public String getTags() {return tags;}
+    public void setTags(String s) {tags = s;}
 
+    @SerializedName("delimiter")
+    @Expose
+    private String delimiter;
+    public String getDelimiter() {return delimiter;}
+    public void setDelimiter(String s) {delimiter = s;}
+
+    public String getWalker() {
+        return walker;
+    }
+    public void setWalker(String s)
+    {
+        walker = s;
+    }
     public String getVkAccessToken() {
         return vkAccessToken;
     }
@@ -102,8 +118,7 @@ public class ResponseBody implements Serializable {
     public String getVerification() {
         return verification;
     }
-    public String getDriverver()
-    {
+    public String getDriverver() {
         return driverver;
 
     }
@@ -288,5 +303,13 @@ public class ResponseBody implements Serializable {
             sb.append(']');
         }
         return sb.toString();
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

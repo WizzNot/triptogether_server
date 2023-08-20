@@ -1,14 +1,11 @@
 package com.example.buysell.controllers;
+
 import com.google.gson.Gson;
 import org.apache.juli.logging.Log;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import com.example.buysell.jsonclasses.ResponseBody;
-import com.example.buysell.dbfuncs.dbfunctions;
-import com.example.buysell.HashPassword;
-
 import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -16,7 +13,9 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
-
+import com.example.buysell.dbfuncs.dbfunctions;
+import com.example.buysell.jsonclasses.ResponseBody;
+import com.example.buysell.HashPassword;
 
 @RestController
 public class Controller1 {
@@ -186,7 +185,20 @@ public class Controller1 {
                 response.setPicture(picture);
                 response.setVkAccessToken(token);
                 return gson.toJson(response);
-            } else if (mode.equals("verification")) {
+            }
+            else if(mode.equals("changepicture"))
+            {
+                String number = event.getNumber();
+                String picture = event.getPicture();
+                dbfunctions.saveBase64txt(picture, number);
+                dbfunctions.updatewhere("profiles", new String[]{"picture"}, new String[]{number + ".txt"}, "number='" + number + "'");
+                return gson.toJson(response);
+
+            }
+            else if (mode.equals("ping")) {
+                response.setStatus("OK");
+            }
+            else if (mode.equals("verification")) {
                 System.out.println("верификация");
                 String number = event.getNumber();
                 String token = event.getVkAccessToken();
@@ -205,11 +217,12 @@ public class Controller1 {
                 String date = event.getDate();
                 String cntpass = event.getCountpass();
                 String comm = event.getText();
-                dbfunctions.write("travels", new String[]{driver, companion, firstadress, secondadress, price, date, cntpass, comm});
+                String tags = event.getTags();
+                dbfunctions.write("travels", new String[]{driver, companion, firstadress, secondadress, price, date, cntpass, comm, tags});
                 return gson.toJson(response);
             } else if (mode.equals("gettravels")) {
                 String number = event.getNumber();
-                String[] otv = dbfunctions.readwhere("travels", new String[]{"driver", "companion", "firstadr", "secondadr", "price", "date", "countpass", "comment"}, "driver='" + number + "' OR companion='" + number + "'");
+                String[] otv = dbfunctions.readwhere("travels", new String[]{"driver", "companion", "firstadr", "secondadr", "price", "date", "countpass", "tags"}, "driver='" + number + "' OR companion='" + number + "'");
                 response.setDriver(otv[0]);
                 response.setCompanion(otv[1]);
                 response.setFirstadress(otv[2]);
@@ -217,7 +230,10 @@ public class Controller1 {
                 response.setPrice(otv[4]);
                 response.setDate(otv[5]);
                 response.setCountpass(otv[6]);
-                response.setText(otv[7]);
+                response.setTags(otv[7]);
+                String[] otv_comm = dbfunctions.read_comments("travels");
+                response.setText(otv_comm[0]);
+                response.setDelimiter(otv_comm[1]);
                 return gson.toJson(response);
             } else if (mode.equals("putdriver")) {
                 String frstadr = event.getFirstadress();
@@ -236,14 +252,17 @@ public class Controller1 {
                 dbfunctions.updatewhere("travels", new String[]{"companion"}, new String[]{comp}, "driver='" + driver + "' AND date='" + date + "' AND firstadr='" + frstadr + "' AND secondadr='" + scndadr + "'");
                 return gson.toJson(response);
             } else if (mode.equals("finddriver")) {
-                String[] otv = dbfunctions.readwhere("travels", new String[]{"driver", "firstadr", "secondadr", "price", "countpass", "date", "comment"}, "companion='empty'");
+                String[] otv = dbfunctions.readwhere("travels", new String[]{"driver", "firstadr", "secondadr", "price", "countpass", "date", "tags"}, "companion='empty'");
                 response.setDriver(otv[0]);
                 response.setFirstadress(otv[1]);
                 response.setSecondadress(otv[2]);
                 response.setPrice(otv[3]);
                 response.setCountpass(otv[4]);
                 response.setDate(otv[5]);
-                response.setText(otv[6]);
+                response.setTags(otv[6]);
+                String[] otv_comm = dbfunctions.read_comments("travels");
+                response.setText(otv_comm[0]);
+                response.setDelimiter(otv_comm[1]);
                 String verif = "";
 
                 for (int i = 0; i < otv[0].split(";").length; i++) {
@@ -254,14 +273,17 @@ public class Controller1 {
 
                 return gson.toJson(response);
             } else if (mode.equals("findcompanion")) {
-                String[] otv = dbfunctions.readwhere("travels", new String[]{"companion", "firstadr", "secondadr", "price", "countpass", "date", "comment"}, "driver='empty'");
+                String[] otv = dbfunctions.readwhere("travels", new String[]{"companion", "firstadr", "secondadr", "price", "countpass", "date", "tags"}, "driver='empty'");
                 response.setCompanion(otv[0]);
                 response.setFirstadress(otv[1]);
                 response.setSecondadress(otv[2]);
                 response.setPrice(otv[3]);
                 response.setCountpass(otv[4]);
                 response.setDate(otv[5]);
-                response.setText(otv[6]);
+                String[] otv_comm = dbfunctions.read_comments("travels");
+                response.setText(otv_comm[0]);
+                response.setDelimiter(otv_comm[1]);
+                response.setTags(otv[6]);
                 String verif = "";
                 for (int i = 0; i < otv[0].split(";").length; i++) {
                     verif = verif + dbfunctions.readwhere("profiles", new String[]{"verification"}, "number='" + otv[0].split(";")[i] + "'")[0] + ";";
@@ -303,17 +325,21 @@ public class Controller1 {
                 String firstadress = event.getFirstadress();
                 String secondadress = event.getSecondadress();
                 String comment = event.getText();
-                dbfunctions.write("walkers", new String[]{number, second, date, type, count, firstadress, secondadress, comment});
+                String tags = event.getTags();
+                dbfunctions.write("walkers", new String[]{number, second, date, type, count, firstadress, secondadress, comment, tags});
                 return gson.toJson(response);
             } else if (mode.equals("findwalker")) {
-                String[] otv = dbfunctions.readwhere("walkers", new String[]{"fstwalker", "date", "type", "count", "firstadress", "secondadress", "comment"}, "scndwalker='empty'");
+                String[] otv = dbfunctions.readwhere("walkers", new String[]{"fstwalker", "date", "type", "count", "firstadress", "secondadress", "tags"}, "scndwalker='empty'");
                 response.setWalker(otv[0]);
                 response.setDate(otv[1]);
                 response.setPrice(otv[2]);
                 response.setCountpass(otv[3]);
                 response.setFirstadress(otv[4]);
                 response.setSecondadress(otv[5]);
-                response.setText(otv[6]);
+                String[] otv_comm = dbfunctions.read_comments("walkers");
+                response.setText(otv_comm[0]);
+                response.setDelimiter(otv_comm[1]);
+                response.setTags(otv[6]);
                 String verif = "";
                 for (int i = 0; i < otv[0].split(";").length; i++) {
                     verif = verif + dbfunctions.readwhere("profiles", new String[]{"verification"}, "number='" + otv[0].split(";")[i] + "'")[0] + ";";
@@ -349,7 +375,8 @@ public class Controller1 {
                 String firstadress = event.getFirstadress();
                 String secondadress = event.getSecondadress();
                 String comment = event.getText();
-                dbfunctions.write("adventures", new String[]{number, second, date, type, count, firstadress, secondadress, comment});
+                String tags = event.getTags();
+                dbfunctions.write("adventures", new String[]{number, second, date, type, count, firstadress, secondadress, comment, tags});
                 return gson.toJson(response);
             } else if (mode.equals("getadventures")) {
                 String number = event.getNumber();
@@ -371,14 +398,17 @@ public class Controller1 {
                 String secondadress = event.getSecondadress();
                 dbfunctions.updatewhere("adventures", new String[]{"scndwalker"}, new String[]{second}, "fstwalker='" + number + "' AND date='" + date + "' AND type='" + type + "' AND firstadress='" + firstadress + "' AND secondadress='" + secondadress + "'");
             } else if (mode.equals("findadventure")) {
-                String[] otv = dbfunctions.readwhere("adventures", new String[]{"fstwalker", "date", "type", "count", "firstadress", "secondadress", "comment"}, "scndwalker='empty'");
+                String[] otv = dbfunctions.readwhere("adventures", new String[]{"fstwalker", "date", "type", "count", "firstadress", "secondadress", "tags"}, "scndwalker='empty'");
                 response.setWalker(otv[0]);
                 response.setDate(otv[1]);
                 response.setPrice(otv[2]);
                 response.setCountpass(otv[3]);
                 response.setFirstadress(otv[4]);
                 response.setSecondadress(otv[5]);
-                response.setText(otv[6]);
+                String[] otv_comm = dbfunctions.read_comments("adventures");
+                response.setText(otv_comm[0]);
+                response.setDelimiter(otv_comm[1]);
+                response.setTags(otv[6]);
                 String verif = "";
                 System.out.println(otv[0]);
                 for (int i = 0; i < otv[0].split(";").length; i++) {
@@ -398,6 +428,9 @@ public class Controller1 {
                 response.setSecondadress(otv[3]);
                 return gson.toJson(response);
             }
+            else {
+                response.setStatus("error: field \"mode\" is Invalid");
+            }
             return gson.toJson(response);
         }
         catch (Exception e)
@@ -406,6 +439,8 @@ public class Controller1 {
             ResponseBody event = lol.fromJson(body, ResponseBody.class);
             ResponseBody response = new ResponseBody();
             System.out.println(e.toString());
+            System.out.println(e.getMessage());
+            e.printStackTrace();
             response.setText(e.toString());
             return e.toString();
         }
